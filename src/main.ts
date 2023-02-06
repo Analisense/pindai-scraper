@@ -1,18 +1,18 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
-import { NestFactory, HttpAdapterHost } from '@nestjs/core';
-import { AppModule } from './app.module';
-import * as compression from 'compression';
-import helmet from 'helmet';
 import { ConfigService } from '@nestjs/config';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import {
   DocumentBuilder,
   SwaggerCustomOptions,
   SwaggerDocumentOptions,
   SwaggerModule,
 } from '@nestjs/swagger';
-import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import * as compression from 'compression';
+import helmet from 'helmet';
+import { AppModule } from './app.module';
 import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exception.filter.ts';
+import { ResponseTransformInterceptor } from './common/interceptors/response-transform.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -50,6 +50,9 @@ async function bootstrap() {
   // Config Service
   const configService = app.get(ConfigService);
 
+  // Global prefix
+  app.setGlobalPrefix(configService.get('PREFIX_NAME', 'service_name'));
+
   // Swagger Configuration
   const swaggerConfig = new DocumentBuilder()
     .setTitle(configService.get('APP_NAME'))
@@ -76,14 +79,11 @@ async function bootstrap() {
   };
 
   SwaggerModule.setup(
-    `${configService.get('APP_NAME')}/api`,
+    `${configService.get('PREFIX_NAME')}/api`,
     app,
     document,
     customOptions,
   );
-
-  // Global prefix
-  app.setGlobalPrefix(configService.get('PREFIX_NAME', 'service_name'));
 
   await app.listen(parseInt(configService.get('PORT', '3000'), 10));
   logger.verbose(`Application is running on: ${await app.getUrl()}`);
