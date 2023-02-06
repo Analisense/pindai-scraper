@@ -36,12 +36,15 @@ $ npm install
 
 ```bash
 # development
+$ npx prisma generate
 $ npm run start
 
 # watch mode
+$ npx prisma generate
 $ npm run start:dev
 
 # production mode
+$ npx prisma generate
 $ npm run start:prod
 ```
 
