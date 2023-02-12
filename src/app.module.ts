@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { envValidationSchema } from './config/env-validation.schema';
 import { GreetingModule } from './modules/greeting/greeting.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { PindaiUkiModule } from './modules/pindai-uki/pindai-uki.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     PrismaModule,
     GreetingModule,
+    PindaiUkiModule,
   ],
   controllers: [AppController],
 })

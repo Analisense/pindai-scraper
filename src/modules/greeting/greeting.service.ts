@@ -25,6 +25,7 @@ export class GreetingService {
       throw error;
     }
   }
+
   puppeteerProfileGithub = async () => {
     // Launch the browser
     const browser = await puppeteer.launch({ headless: false });
@@ -33,7 +34,7 @@ export class GreetingService {
     const page = await browser.newPage();
 
     // Go to your site
-    await page.goto('https://github.com/erlanggadewa');
+    await page.goto('https://github.com/gidachmad');
 
     //  ! Get just one elements with selector 'h1.vcard-names > span, with removed \n and \t'
     const nameValue = await page.$eval('h1.vcard-names > span.p-name', (el) => {

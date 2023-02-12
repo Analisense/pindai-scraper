@@ -20,3 +20,18 @@ model Greeting {
 
   @@map("greetings")
 }
+
+model PindaiUki {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  uuid         String
+  name         String
+  jenis_pt     String
+  jenis_satker String
+  aksi         String
+  detailIku    Json[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("pindaiUki")
+}
+
