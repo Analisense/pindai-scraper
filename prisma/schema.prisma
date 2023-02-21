@@ -24,7 +24,7 @@ model Greeting {
 model PindaiUki {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   uuid         String
-  name         String
+  name         String   @unique
   jenis_pt     String
   jenis_satker String
   aksi         String

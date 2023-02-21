@@ -1,27 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { number } from 'joi';
-import { resolve } from 'path';
-import puppeteer, { Browser, Page } from 'puppeteer';
-import HelperClass from 'src/common/helper/helper-class';
+import puppeteer, { Browser } from 'puppeteer';
 import { PrismaService } from 'src/prisma/prisma.service';
-import PindaiUkiDto from './dto/pindai-uki.dto';
 
 @Injectable()
 export class PindaiUkiService {
   constructor(private readonly prisma: PrismaService) {}
   private readonly logger = new Logger(PindaiUkiService.name);
-  private url = 'https://pindai.kemdikbud.go.id/web/iku2021/';
+  // private url = 'https://pindai.kemdikbud.go.id/web/iku2020/';
 
-  async getUniversity() {
+  async getUniversity(url: string) {
     try {
-      const univData = await this.getUniv();
-      console.log({ detailiku: univData[0].detailIku });
-      console.log(typeof univData[0].aksi);
+      const univData = await this.getUniv(url);
 
       for (let index = 0; index < univData.length; index++) {
         const insertData = univData[index];
-        await this.prisma.pindaiUki.create({
-          data: insertData,
+        await this.prisma.pindaiUki.upsert({
+          where: {
+            name: insertData.name,
+          },
+          create: insertData,
+          update: insertData,
         });
       }
       return univData;
@@ -31,19 +29,35 @@ export class PindaiUkiService {
     }
   }
 
-  getUniv = async () => {
+  getUniv = async (url: string) => {
     const browser: Browser = await puppeteer.launch({ headless: true });
 
     const page = await browser.newPage();
+    await page.setViewport({ width: 1920, height: 1080 });
+    await page.setRequestInterception(true);
 
-    await page.goto(this.url);
+    page.on('request', (req) => {
+      if (
+        req.resourceType() == 'stylesheet' ||
+        req.resourceType() == 'font' ||
+        req.resourceType() == 'image'
+      ) {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
+
+    await page.goto(url);
 
     // get all <tr> element
     const allUnivData: any = await page.$$eval(
       'tr',
       (elements: HTMLTableRowElement[]) => {
         return Array.from(elements).map((el) => {
+          // check if there is cells
           if (!el.cells[0].textContent) {
+            // get cells content
             return {
               uuid: el.cells[4].firstElementChild
                 ? el.cells[4].firstElementChild
@@ -65,12 +79,18 @@ export class PindaiUkiService {
     const output = allUnivData.filter((data) => data !== null);
 
     for (let index = 0; index < output.length; index++) {
-      // if (index % 10 === 0) {
-      //   console.log('now waiting for 5 seconds');
-      //   await HelperClass.sleepNow(5000);
-      // }
       const univ = output[index];
-      const detailIku = await this.getDetailUniv(univ.name, univ.aksi, browser);
+      const detailIku = [];
+      console.log('Now scraping IKU detail from : ' + univ.name);
+      for (let tahun = 2020; tahun < new Date().getFullYear(); tahun++) {
+        const data = await this.getDetailUniv(
+          univ.aksi.replace(/\d{4}/, tahun),
+          browser,
+        );
+        detailIku.push({ [tahun]: data });
+      }
+      console.log('Finish scraping IKU detail from : ' + univ.name);
+      console.log('================================================');
       output[index]['detailIku'] = detailIku;
     }
 
@@ -79,11 +99,24 @@ export class PindaiUkiService {
     return output;
   };
 
-  getDetailUniv = async (name: string, url: string, browser: Browser) => {
-    console.log('Now scraping IKU detail from : ' + name);
+  getDetailUniv = async (url: string, browser: Browser) => {
     const page = await browser.newPage();
+    await page.setViewport({ width: 1920, height: 1080 });
+    await page.setRequestInterception(true);
 
-    await page.goto(url);
+    page.on('request', (req) => {
+      if (
+        req.resourceType() == 'stylesheet' ||
+        req.resourceType() == 'font' ||
+        req.resourceType() == 'image'
+      ) {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
+
+    await page.goto(url, { waitUntil: 'load', timeout: 50000 });
 
     // get all tr
     const table: string[][] = await page.$$eval(
@@ -110,7 +143,6 @@ export class PindaiUkiService {
       return { [item[0]]: objOutput };
     });
 
-    console.log('Finish scraping IKU detail from : ' + name);
     await page.close();
     return output;
   };
