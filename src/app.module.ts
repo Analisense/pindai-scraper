@@ -5,6 +5,7 @@ import { envValidationSchema } from './config/env-validation.schema';
 import { GreetingModule } from './modules/greeting/greeting.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { PindaiUkiModule } from './modules/pindai-uki/pindai-uki.module';
+import { PindaiPtModule } from './modules/pindai-pt/pindai-pt.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { PindaiUkiModule } from './modules/pindai-uki/pindai-uki.module';
     PrismaModule,
     GreetingModule,
     PindaiUkiModule,
+    PindaiPtModule,
   ],
   controllers: [AppController],
 })

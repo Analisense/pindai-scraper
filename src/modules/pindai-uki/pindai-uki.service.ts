@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import puppeteer, { Browser } from 'puppeteer';
+import { puppeteer_args } from 'src/common/helper/helper-class';
 import { PrismaService } from 'src/prisma/prisma.service';
+import PindaiUkiDto from './dto/pindai-uki.dto';
 
 @Injectable()
 export class PindaiUkiService {
@@ -8,12 +10,12 @@ export class PindaiUkiService {
   private readonly logger = new Logger(PindaiUkiService.name);
   // private url = 'https://pindai.kemdikbud.go.id/web/iku2020/';
 
-  async getUniversity(url: string) {
+  async getUnivIku(url: string) {
     try {
       const univData = await this.getUniv(url);
 
       for (let index = 0; index < univData.length; index++) {
-        const insertData = univData[index];
+        const insertData: PindaiUkiDto = univData[index];
         await this.prisma.pindaiUki.upsert({
           where: {
             name: insertData.name,
@@ -22,7 +24,7 @@ export class PindaiUkiService {
           update: insertData,
         });
       }
-      return univData;
+      return univData.length;
     } catch (error) {
       this.logger.error(error);
       throw error;
@@ -30,10 +32,12 @@ export class PindaiUkiService {
   }
 
   getUniv = async (url: string) => {
-    const browser: Browser = await puppeteer.launch({ headless: true });
+    const browser: Browser = await puppeteer.launch({
+      headless: true,
+      args: puppeteer_args,
+    });
 
     const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
     await page.setRequestInterception(true);
 
     page.on('request', (req) => {
@@ -83,7 +87,7 @@ export class PindaiUkiService {
       const detailIku = [];
       console.log('Now scraping IKU detail from : ' + univ.name);
       for (let tahun = 2020; tahun < new Date().getFullYear(); tahun++) {
-        const data = await this.getDetailUniv(
+        const data = await this.getDetailUnivIku(
           univ.aksi.replace(/\d{4}/, tahun),
           browser,
         );
@@ -99,9 +103,8 @@ export class PindaiUkiService {
     return output;
   };
 
-  getDetailUniv = async (url: string, browser: Browser) => {
+  getDetailUnivIku = async (url: string, browser: Browser) => {
     const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
     await page.setRequestInterception(true);
 
     page.on('request', (req) => {
@@ -116,7 +119,7 @@ export class PindaiUkiService {
       }
     });
 
-    await page.goto(url, { waitUntil: 'load', timeout: 50000 });
+    await page.goto(url, { waitUntil: 'domcontentloaded' });
 
     // get all tr
     const table: string[][] = await page.$$eval(

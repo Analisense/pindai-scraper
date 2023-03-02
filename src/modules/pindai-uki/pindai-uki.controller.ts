@@ -5,8 +5,8 @@ import { PindaiUkiService } from './pindai-uki.service';
 export class PindaiUkiController {
   constructor(private readonly pindaiUkiService: PindaiUkiService) {}
 
-  @Get('university')
-  getUniversity(@Query('url') url: string) {
-    return this.pindaiUkiService.getUniversity(url);
+  @Get('univ-iku')
+  getUnivIku(@Query('url') url: string) {
+    return this.pindaiUkiService.getUnivIku(url);
   }
 }

@@ -35,3 +35,15 @@ model PindaiUki {
   @@map("pindaiUki")
 }
 
+model PindaiPt {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  univCode     Int
+  name         String   @unique
+  progress     Json
+  aksi         String
+  detailPt     Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("pindaiPt")
+}
